@@ -1,23 +1,28 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+
+type Item = {
+  id: number;
+  name: string;
+  basePower: number;
+  plus: number;
+};
 
 const ranks = [
   { name: "Er", min: 1 },
   { name: "Onbaşı", min: 5 },
   { name: "Çavuş", min: 10 },
-  { name: "Astsubay", min: 18 },
-  { name: "Teğmen", min: 28 },
-  { name: "Yüzbaşı", min: 42 },
-  { name: "Binbaşı", min: 60 },
-  { name: "Albay", min: 80 },
-  { name: "General", min: 100 },
+  { name: "Teğmen", min: 20 },
+  { name: "Yüzbaşı", min: 35 },
+  { name: "Binbaşı", min: 55 },
+  { name: "General", min: 80 },
 ];
 
-const baseItems = [
-  { id: 1, name: "Taaruz Tüfeği", basePower: 120 },
-  { id: 2, name: "Pompalı", basePower: 180 },
-  { id: 3, name: "Zırh", basePower: 90 },
+const starterItems: Item[] = [
+  { id: 1, name: "Taaruz Tüfeği", basePower: 120, plus: 0 },
+  { id: 2, name: "Pompalı", basePower: 180, plus: 0 },
+  { id: 3, name: "Zırh", basePower: 90, plus: 0 },
 ];
 
 function successRate(plus: number) {
@@ -25,96 +30,140 @@ function successRate(plus: number) {
   if (plus <= 4) return 75;
   if (plus <= 6) return 55;
   if (plus <= 8) return 35;
-  if (plus <= 10) return 20;
-  return 10;
+  return 20;
 }
 
 function upgradeCost(plus: number) {
   return 100 + plus * plus * 50;
 }
 
-function power(item: any) {
+function itemPower(item: Item) {
   return Math.floor(item.basePower * (1 + item.plus * 0.1));
 }
 
 function getRank(level: number) {
-  return ranks.filter(r => level >= r.min).at(-1);
+  return ranks.filter((r) => level >= r.min).at(-1)?.name ?? "Er";
 }
 
 export default function Page() {
-  const [level, setLevel] = useState(10);
-  const [gold, setGold] = useState(2000);
-  const [items, setItems] = useState(
-    baseItems.map(i => ({ ...i, plus: 0 }))
-  );
-  const [selected, setSelected] = useState(0);
-  const [log, setLog] = useState<string[]>([]);
+  const [level] = useState(10);
+  const [gold, setGold] = useState(2500);
+  const [items, setItems] = useState<Item[]>(starterItems);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [logs, setLogs] = useState<string[]>(["Oyun başladı."]);
 
-  const current = items[selected];
+  const selected = items[selectedIndex];
+
+  const totalPower = useMemo(() => {
+    return items.reduce((sum, item) => sum + itemPower(item), 0);
+  }, [items]);
 
   function addLog(text: string) {
-    setLog(prev => [text, ...prev.slice(0, 5)]);
+    setLogs((old) => [text, ...old].slice(0, 6));
   }
 
   function upgrade() {
-    const cost = upgradeCost(current.plus);
+    const cost = upgradeCost(selected.plus);
+
     if (gold < cost) {
-      addLog("Para yetmiyor");
+      addLog("Yetersiz altın.");
       return;
     }
 
-    const chance = successRate(current.plus);
+    setGold((g) => g - cost);
+
+    const chance = successRate(selected.plus);
     const roll = Math.random() * 100;
 
-    setGold(g => g - cost);
-
-    if (roll < chance) {
-      setItems(items.map((i, idx) =>
-        idx === selected ? { ...i, plus: i.plus + 1 } : i
-      ));
-      addLog("Başarılı!");
+    if (roll <= chance) {
+      setItems((old) =>
+        old.map((item, index) =>
+          index === selectedIndex ? { ...item, plus: item.plus + 1 } : item
+        )
+      );
+      addLog(`${selected.name} başarıyla +${selected.plus + 1} oldu.`);
     } else {
-      addLog("Başarısız!");
+      addLog(`${selected.name} geliştirme başarısız.`);
     }
   }
 
-  const totalPower = useMemo(
-    () => items.reduce((sum, i) => sum + power(i), 0),
-    [items]
-  );
-
   return (
-    <div style={{ padding: 20 }}>
-      <h1>Zombie Game</h1>
+    <main className="min-h-screen bg-zinc-950 text-white p-6">
+      <div className="mx-auto max-w-4xl space-y-6">
+        <section className="rounded-2xl bg-zinc-900 p-6 border border-zinc-800">
+          <h1 className="text-4xl font-bold">Zombie Game</h1>
+          <p className="text-zinc-400 mt-2">Web RPG Shooter Prototype</p>
+        </section>
 
-      <p>Level: {level} ({getRank(level)?.name})</p>
-      <p>Gold: {gold}</p>
-      <p>Total Power: {totalPower}</p>
+        <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="rounded-2xl bg-zinc-900 p-5 border border-zinc-800">
+            <p className="text-zinc-400">Level</p>
+            <h2 className="text-2xl font-bold">{level}</h2>
+          </div>
 
-      <hr />
+          <div className="rounded-2xl bg-zinc-900 p-5 border border-zinc-800">
+            <p className="text-zinc-400">Rütbe</p>
+            <h2 className="text-2xl font-bold">{getRank(level)}</h2>
+          </div>
 
-      <h2>Items</h2>
-      {items.map((item, i) => (
-        <div key={item.id} onClick={() => setSelected(i)} style={{ cursor: "pointer", marginBottom: 10 }}>
-          {item.name} +{item.plus} (Power: {power(item)})
-        </div>
-      ))}
+          <div className="rounded-2xl bg-zinc-900 p-5 border border-zinc-800">
+            <p className="text-zinc-400">Altın</p>
+            <h2 className="text-2xl font-bold">{gold}</h2>
+          </div>
+        </section>
 
-      <hr />
+        <section className="rounded-2xl bg-zinc-900 p-6 border border-zinc-800">
+          <h2 className="text-2xl font-bold mb-4">Envanter</h2>
 
-      <h2>Upgrade</h2>
-      <p>{current.name} +{current.plus}</p>
-      <p>Chance: %{successRate(current.plus)}</p>
-      <p>Cost: {upgradeCost(current.plus)}</p>
+          <div className="space-y-3">
+            {items.map((item, index) => (
+              <button
+                key={item.id}
+                onClick={() => setSelectedIndex(index)}
+                className={`w-full text-left rounded-xl p-4 border ${
+                  selectedIndex === index
+                    ? "border-red-500 bg-red-950"
+                    : "border-zinc-700 bg-zinc-950"
+                }`}
+              >
+                <div className="flex justify-between">
+                  <span>
+                    {item.name} +{item.plus}
+                  </span>
+                  <span>Güç: {itemPower(item)}</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </section>
 
-      <button onClick={upgrade}>Upgrade</button>
+        <section className="rounded-2xl bg-zinc-900 p-6 border border-zinc-800">
+          <h2 className="text-2xl font-bold mb-4">Artı Basma</h2>
 
-      <hr />
+          <p>Seçili item: {selected.name} +{selected.plus}</p>
+          <p>Başarı oranı: %{successRate(selected.plus)}</p>
+          <p>Maliyet: {upgradeCost(selected.plus)} altın</p>
+          <p>Toplam güç: {totalPower}</p>
 
-      <h2>Log</h2>
-      {log.map((l, i) => (
-        <div key={i}>{l}</div>
-      ))}
-    </div>
+          <button
+            onClick={upgrade}
+            className="mt-4 rounded-xl bg-red-700 px-6 py-3 font-bold hover:bg-red-600"
+          >
+            Geliştir
+          </button>
+        </section>
+
+        <section className="rounded-2xl bg-zinc-900 p-6 border border-zinc-800">
+          <h2 className="text-2xl font-bold mb-4">Log</h2>
+          <div className="space-y-2">
+            {logs.map((log, index) => (
+              <div key={index} className="rounded-lg bg-zinc-950 p-3">
+                {log}
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
+    </main>
   );
 }

@@ -54,9 +54,10 @@ export default function Page() {
 
   const selected = items[selectedIndex];
 
-  const totalPower = useMemo(() => {
-    return items.reduce((sum, item) => sum + itemPower(item), 0);
-  }, [items]);
+  const totalPower = useMemo(
+    () => items.reduce((sum, item) => sum + itemPower(item), 0),
+    [items]
+  );
 
   function addLog(text: string) {
     setLogs((old) => [text, ...old].slice(0, 6));
@@ -87,59 +88,51 @@ export default function Page() {
     }
   }
 
+  const box = {
+    background: "#18181b",
+    border: "1px solid #27272a",
+    borderRadius: 16,
+    padding: 20,
+  };
+
   return (
-    <main className="min-h-screen bg-zinc-950 text-white p-6">
-      <div className="mx-auto max-w-4xl space-y-6">
-        <section className="rounded-2xl bg-zinc-900 p-6 border border-zinc-800">
-          <h1 className="text-4xl font-bold">Zombie Game</h1>
-          <p className="text-zinc-400 mt-2">Web RPG Shooter Prototype</p>
+    <main style={{ minHeight: "100vh", padding: 24, background: "#09090b", color: "white" }}>
+      <div style={{ maxWidth: 900, margin: "0 auto", display: "grid", gap: 20 }}>
+        <section style={box}>
+          <h1 style={{ fontSize: 40, margin: 0 }}>Zombie Game</h1>
+          <p style={{ color: "#a1a1aa" }}>Web RPG Shooter Prototype</p>
         </section>
 
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="rounded-2xl bg-zinc-900 p-5 border border-zinc-800">
-            <p className="text-zinc-400">Level</p>
-            <h2 className="text-2xl font-bold">{level}</h2>
-          </div>
-
-          <div className="rounded-2xl bg-zinc-900 p-5 border border-zinc-800">
-            <p className="text-zinc-400">Rütbe</p>
-            <h2 className="text-2xl font-bold">{getRank(level)}</h2>
-          </div>
-
-          <div className="rounded-2xl bg-zinc-900 p-5 border border-zinc-800">
-            <p className="text-zinc-400">Altın</p>
-            <h2 className="text-2xl font-bold">{gold}</h2>
-          </div>
+        <section style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
+          <div style={box}><p>Level</p><h2>{level}</h2></div>
+          <div style={box}><p>Rütbe</p><h2>{getRank(level)}</h2></div>
+          <div style={box}><p>Altın</p><h2>{gold}</h2></div>
         </section>
 
-        <section className="rounded-2xl bg-zinc-900 p-6 border border-zinc-800">
-          <h2 className="text-2xl font-bold mb-4">Envanter</h2>
-
-          <div className="space-y-3">
-            {items.map((item, index) => (
-              <button
-                key={item.id}
-                onClick={() => setSelectedIndex(index)}
-                className={`w-full text-left rounded-xl p-4 border ${
-                  selectedIndex === index
-                    ? "border-red-500 bg-red-950"
-                    : "border-zinc-700 bg-zinc-950"
-                }`}
-              >
-                <div className="flex justify-between">
-                  <span>
-                    {item.name} +{item.plus}
-                  </span>
-                  <span>Güç: {itemPower(item)}</span>
-                </div>
-              </button>
-            ))}
-          </div>
+        <section style={box}>
+          <h2>Envanter</h2>
+          {items.map((item, index) => (
+            <button
+              key={item.id}
+              onClick={() => setSelectedIndex(index)}
+              style={{
+                width: "100%",
+                marginBottom: 10,
+                padding: 15,
+                borderRadius: 12,
+                border: selectedIndex === index ? "1px solid #ef4444" : "1px solid #3f3f46",
+                background: selectedIndex === index ? "#450a0a" : "#09090b",
+                color: "white",
+                textAlign: "left",
+              }}
+            >
+              {item.name} +{item.plus} — Güç: {itemPower(item)}
+            </button>
+          ))}
         </section>
 
-        <section className="rounded-2xl bg-zinc-900 p-6 border border-zinc-800">
-          <h2 className="text-2xl font-bold mb-4">Artı Basma</h2>
-
+        <section style={box}>
+          <h2>Artı Basma</h2>
           <p>Seçili item: {selected.name} +{selected.plus}</p>
           <p>Başarı oranı: %{successRate(selected.plus)}</p>
           <p>Maliyet: {upgradeCost(selected.plus)} altın</p>
@@ -147,21 +140,26 @@ export default function Page() {
 
           <button
             onClick={upgrade}
-            className="mt-4 rounded-xl bg-red-700 px-6 py-3 font-bold hover:bg-red-600"
+            style={{
+              padding: "12px 24px",
+              borderRadius: 12,
+              border: 0,
+              background: "#b91c1c",
+              color: "white",
+              fontWeight: "bold",
+            }}
           >
             Geliştir
           </button>
         </section>
 
-        <section className="rounded-2xl bg-zinc-900 p-6 border border-zinc-800">
-          <h2 className="text-2xl font-bold mb-4">Log</h2>
-          <div className="space-y-2">
-            {logs.map((log, index) => (
-              <div key={index} className="rounded-lg bg-zinc-950 p-3">
-                {log}
-              </div>
-            ))}
-          </div>
+        <section style={box}>
+          <h2>Log</h2>
+          {logs.map((log, index) => (
+            <div key={index} style={{ background: "#09090b", padding: 10, borderRadius: 8, marginBottom: 8 }}>
+              {log}
+            </div>
+          ))}
         </section>
       </div>
     </main>
